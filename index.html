@@ -93,6 +93,14 @@
     .field input::placeholder, .field textarea::placeholder { color: var(--ink3); font-weight: 300; }
     .submit-btn { width: 100%; padding: 13px; background: var(--wood); border: none; color: white; font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; cursor: pointer; border-radius: 2px; transition: background 0.16s; margin-top: 6px; }
     .submit-btn:hover { background: var(--wood-dark); }
+    .field select { width: 100%; background: var(--surface); border: 1px solid var(--border); color: var(--ink); padding: 10px 13px; font-family: 'Noto Serif TC', serif; font-size: 14px; outline: none; border-radius: 2px; transition: border-color 0.16s; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23A08870' stroke-width='1.5' fill='none'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; cursor: pointer; }
+    .field select:focus { border-color: var(--wood); }
+    .upload-area { border: 1.5px dashed var(--border2); border-radius: 4px; padding: 28px 20px; text-align: center; cursor: pointer; transition: border-color 0.2s, background 0.2s; background: var(--surface); }
+    .upload-area:hover, .upload-area.drag { border-color: var(--wood); background: #faf5ef; }
+    .upload-area .upload-icon { font-size: 32px; margin-bottom: 8px; }
+    .upload-area p { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--ink3); line-height: 1.8; letter-spacing: 0.04em; }
+    .upload-area .upload-hint { font-size: 9px; color: var(--border2); margin-top: 4px; }
+    .upload-preview { width: 100%; max-height: 180px; object-fit: cover; border-radius: 4px; margin-top: 10px; display: none; border: 1px solid var(--border); }
 
     .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(56px); background: var(--ink); color: var(--bg); font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.1em; padding: 11px 22px; border-radius: 2px; transition: transform 0.22s ease; z-index: 200; white-space: nowrap; pointer-events: none; }
     .toast.show { transform: translateX(-50%) translateY(0); }
@@ -137,9 +145,49 @@
   <form id="submit-form">
     <div class="field"><label>姓名 *</label><input name="name" placeholder="你的名字" required></div>
     <div class="field"><label>作品名稱 *</label><input name="title" placeholder="例：阿里山小火車穿山洞" required></div>
-    <div class="field"><label>嘉義主題</label><input name="theme" placeholder="例：阿里山鐵路、嘉義美食…"></div>
-    <div class="field"><label>機構動作</label><input name="motion" placeholder="例：往復運動、弧線下擺…"></div>
-    <div class="field"><label>作品照片網址（選填）</label><input name="imageUrl" placeholder="貼上公開圖片連結"></div>
+    <div class="field">
+      <label>嘉義主題</label>
+      <select name="theme">
+        <option value="">請選擇…</option>
+        <option>阿里山鐵路</option>
+        <option>嘉義美食</option>
+        <option>嘉義生態</option>
+        <option>嘉義職人</option>
+        <option>嘉義地景</option>
+        <option>其他</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>凸輪形狀</label>
+      <select name="cam">
+        <option value="">請選擇…</option>
+        <option>偏心圓</option>
+        <option>蝸牛形</option>
+        <option>橢圓形</option>
+        <option>自製形狀</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>動作類型</label>
+      <select name="motion">
+        <option value="">請選擇…</option>
+        <option>往復運動</option>
+        <option>弧線擺動</option>
+        <option>重複敲擊</option>
+        <option>旋轉運動</option>
+        <option>其他</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>作品照片（選填）</label>
+      <div class="upload-area" id="uploadArea">
+        <div class="upload-icon">📷</div>
+        <p>點擊上傳或拖曳圖片到這裡</p>
+        <p class="upload-hint">支援 JPG、PNG，最大 3MB</p>
+      </div>
+      <img class="upload-preview" id="uploadPreview" alt="預覽">
+      <input type="file" id="fileInput" accept="image/jpeg,image/png" style="display:none">
+    </div>
     <div class="field"><label>設計說明 *</label><textarea name="description" rows="5" placeholder="說明凸輪原理，以及作品和嘉義的連結…" required></textarea></div>
     <button type="submit" class="submit-btn">確認上傳</button>
   </form>
@@ -216,7 +264,7 @@ function renderWorks(works) {
       <div class="card-body">
         <div class="card-title">${w.title}</div>
         <div class="card-by">${w.name}</div>
-        <div class="tags">${w.theme?`<span class="tag">${w.theme}</span>`:""}${w.motion?`<span class="tag">${w.motion}</span>`:""}</div>
+        <div class="tags">${w.theme?`<span class="tag">${w.theme}</span>`:""}${w.cam?`<span class="tag">${w.cam}</span>`:""}${w.motion?`<span class="tag">${w.motion}</span>`:""}</div>
         <p class="card-desc">${w.description}</p>
         <div class="vote-row">
           <div><div class="vnum" id="vc-${w.id}">${w.votes||0}</div><div class="vunit">票</div></div>
@@ -271,6 +319,38 @@ onValue(ref(db, "works"), snap => {
   renderWorks(works);
 }, err => { renderWorks(DEMO); });
 
+// Photo upload
+let imageBase64 = "";
+const uploadArea = document.getElementById("uploadArea");
+const fileInput  = document.getElementById("fileInput");
+const preview    = document.getElementById("uploadPreview");
+
+function loadFile(file) {
+  if (!file || !file.type.startsWith("image/")) return;
+  if (file.size > 3 * 1024 * 1024) { toast("圖片超過 3MB"); return; }
+  const reader = new FileReader();
+  reader.onload = e => {
+    const img = new Image();
+    img.onload = () => {
+      const MAX = 800;
+      const ratio = Math.min(MAX / img.width, MAX / img.height, 1);
+      const canvas = document.createElement("canvas");
+      canvas.width = img.width * ratio; canvas.height = img.height * ratio;
+      canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+      imageBase64 = canvas.toDataURL("image/jpeg", 0.82);
+      preview.src = imageBase64; preview.style.display = "block";
+      uploadArea.querySelector("p").textContent = "已選擇圖片（點擊更換）";
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+uploadArea.addEventListener("click", () => fileInput.click());
+fileInput.addEventListener("change", () => loadFile(fileInput.files[0]));
+uploadArea.addEventListener("dragover", e => { e.preventDefault(); uploadArea.classList.add("drag"); });
+uploadArea.addEventListener("dragleave", () => uploadArea.classList.remove("drag"));
+uploadArea.addEventListener("drop", e => { e.preventDefault(); uploadArea.classList.remove("drag"); loadFile(e.dataTransfer.files[0]); });
+
 // Submit
 document.getElementById("submit-form").addEventListener("submit", async e => {
   e.preventDefault();
@@ -280,15 +360,18 @@ document.getElementById("submit-form").addEventListener("submit", async e => {
   try {
     await push(ref(db, "works"), {
       name: fd.get("name"), title: fd.get("title"),
-      theme: fd.get("theme"), motion: fd.get("motion"),
-      description: fd.get("description"), imageUrl: fd.get("imageUrl"),
+      theme: fd.get("theme"), cam: fd.get("cam"),
+      motion: fd.get("motion"), description: fd.get("description"),
+      imageUrl: imageBase64 || "",
       votes: 0, emoji: EMOJIS[Math.floor(Math.random()*EMOJIS.length)],
       createdAt: serverTimestamp()
     });
     e.target.reset();
+    imageBase64 = ""; preview.style.display = "none";
+    uploadArea.querySelector("p").textContent = "點擊上傳或拖曳圖片到這裡";
     toast("上傳成功 ✓");
     document.querySelector('[data-tab="gallery"]').click();
-  } catch { toast("上傳失敗，請重試"); }
+  } catch (err) { toast("上傳失敗，請重試"); console.error(err); }
   btn.textContent = "確認上傳"; btn.disabled = false;
 });
 </script>
